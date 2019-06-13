@@ -111,9 +111,9 @@ export default class Client {
         const batch = gapi.client.newBatch();
         for (const i in messages) {
             let { id, threadId } = messages[i];
-            const request = gmail.users.messages.get({ id, userId });
+            const request = gmail.users.messages.get({ id, userId, format: "metadata" });
             batch.add(request, { id });
-            if (i > 10) break;
+            if (i > 100) break;
         }
         response = await batch;
         return Object.values(response.result).map(res => this.parseResult(res.result));
@@ -123,7 +123,7 @@ export default class Client {
         const { snippet, payload, id } = result;
         const { headers } = payload;
         let body = null;
-        if (payload.mimeType === "multipart/alternative") {
+        if (payload.mimeType === "multipart/alternative" && payload.parts) {
             body = null;
             for (let part of payload.parts) {
                 // Prefer html, default to anything.
@@ -138,7 +138,7 @@ export default class Client {
         else {
             body = payload.body;
         }
-        if (body.size > 0) {
+        if (body && body.size > 0) {
             body = atob(body.data.replace(/-/g, '+').replace(/_/g, '/'));
         }
         else {

@@ -39,7 +39,7 @@ class App extends React.Component {
         {this.state.loggedIn && <Main />}
         {this.state.loggedIn && <button onClick={async e => { await this.client.revokeAccess(); this.setState({ loggedIn: false }) }}>Logout</button>}
         <div className="message-grid">
-          {this.state.messages && this.state.messages.map(e => <Message key={e.id} {...e} />)}
+          {this.state.messages && this.state.messages.map((e, i) => <Message key={e.id} {...e} i={i} />)}
         </div>
       </div>
     );
