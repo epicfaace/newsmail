@@ -16,14 +16,13 @@ class App extends React.Component {
   }
   async componentDidMount() {
     await this.client.load();
-    const status = await this.client.getSigninStatus();
+    const status = true || await this.client.getSigninStatus(); // TODO fix.
+    const getEmail = await this.client.getEmails();
+    const getEmailGenerator = getEmail();
+    console.log(await getEmailGenerator.next());
+    // getEmailGenerator.next();
+    // getEmailGenerator.next();
     this.setState({ loggedIn: status, loading: false });
-  }
-  async onLogin(response) {
-    console.log(response);
-    const jwt = response.Zi.id_token;
-    localStorage.setItem("jwt", jwt);
-    this.setState({ loggedIn: true });
   }
   render() {
     if (this.state.loading) {
