@@ -18,8 +18,8 @@ class App extends React.Component {
   }
   async componentDidMount() {
     await this.client.load();
-    const status = true || await this.client.getSigninStatus(); // TODO fix.
-    const messages = await this.client.getEmails();
+    const status = await this.client.getSigninStatus(); // TODO fix -- when user logs in for the first time, status is still false, until they refresh the page.
+    const messages = status ? await this.client.getEmails(): []; 
     // const getEmailGenerator = getEmail();
     // for (let i = 0; i <= 10; i++) {
     //   messages.push(await );
