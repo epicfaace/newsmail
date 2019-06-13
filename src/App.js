@@ -4,6 +4,7 @@ import logo from './logo.svg';
 import './App.css';
 import Main from './Main';
 import Client from "./lib/client";
+import Message from './Message';
 
 class App extends React.Component {
   constructor(props) {
@@ -11,18 +12,21 @@ class App extends React.Component {
     this.client = new Client();
     this.state = {
       loggedIn: false,
-      loading: true
+      loading: true,
+      messages: []
     }
   }
   async componentDidMount() {
     await this.client.load();
     const status = true || await this.client.getSigninStatus(); // TODO fix.
-    const getEmail = await this.client.getEmails();
-    const getEmailGenerator = getEmail();
-    console.log(await getEmailGenerator.next());
-    // getEmailGenerator.next();
-    // getEmailGenerator.next();
-    this.setState({ loggedIn: status, loading: false });
+    const messages = await this.client.getEmails();
+    // const getEmailGenerator = getEmail();
+    // for (let i = 0; i <= 10; i++) {
+    //   messages.push(await );
+    // }
+    // console.log(Array(10).map(e => getEmailGenerator.next()));
+    // const messages = await Promise.all(Array.from(Array(10)).map(e => getEmailGenerator.next()));
+    this.setState({ loggedIn: status, loading: false, messages });
   }
   render() {
     if (this.state.loading) {
@@ -34,6 +38,9 @@ class App extends React.Component {
         {!this.state.loggedIn && <button onClick={e => this.client.handleAuthClick()}>Sign in</button>}
         {this.state.loggedIn && <Main />}
         {this.state.loggedIn && <button onClick={async e => { await this.client.revokeAccess(); this.setState({ loggedIn: false }) }}>Logout</button>}
+        <div className="message-grid">
+          {this.state.messages && this.state.messages.map(e => <Message key={e.id} {...e} />)}
+        </div>
       </div>
     );
   }

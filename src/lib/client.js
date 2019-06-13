@@ -106,46 +106,47 @@ export default class Client {
         console.log(gapi.client);
         const userId = "me";
         const { gmail } = gapi.client;
-        const response = await gmail.users.messages.list({ userId });
+        let response = await gmail.users.messages.list({ userId });
         const messages = response.result.messages; //nextPageToken, resultSizeEstimate
-        // console.log(results);
-        return async function* () {
-            for (const { id, threadId } of messages) {
-                const { result } = await gmail.users.messages.get({ id, userId });
-                const { snippet, payload } = result;
-                // console.log(payload, result);
-                // console.log(snippet, payload.body.data, payload.headers);
-                const { headers } = payload;
-                console.log(result);
-                let body = null;
-                if (payload.mimeType === "multipart/alternative") {
-                    body = null;
-                    for (let part of payload.parts) {
-                        // Prefer html, default to anything.
-                        if (!body) {
-                            body = part.body;
-                        }
-                        else if (part.mimeType === "text/html") {
-                            body = part.body;
-                        }
-                    }
+        const batch = gapi.client.newBatch();
+        for (const i in messages) {
+            let { id, threadId } = messages[i];
+            const request = gmail.users.messages.get({ id, userId });
+            batch.add(request, { id });
+            if (i > 10) break;
+        }
+        response = await batch;
+        return Object.values(response.result).map(res => this.parseResult(res.result));
+    }
+
+    parseResult(result) {
+        const { snippet, payload, id } = result;
+        const { headers } = payload;
+        let body = null;
+        if (payload.mimeType === "multipart/alternative") {
+            body = null;
+            for (let part of payload.parts) {
+                // Prefer html, default to anything.
+                if (!body) {
+                    body = part.body;
                 }
-                else {
-                    body = payload.body;
+                else if (part.mimeType === "text/html") {
+                    body = part.body;
                 }
-                if (body.size > 0) {
-                    body = atob(body.data.replace(/-/g, '+').replace(/_/g, '/'));
-                }
-                else {
-                    body = "";
-                }
-                console.log(headers);
-                const subject = find(headers, {name: "Subject"}).value;
-                const from = find(headers, {name: "From"}).value;
-                const date = new Date(find(headers, {name: "Date"}).value);
-                yield { body, snippet, subject, from, date };
             }
-        };
-        // console.log(response);
+        }
+        else {
+            body = payload.body;
+        }
+        if (body.size > 0) {
+            body = atob(body.data.replace(/-/g, '+').replace(/_/g, '/'));
+        }
+        else {
+            body = "";
+        }
+        const subject = find(headers, {name: "Subject"}).value;
+        const from = find(headers, {name: "From"}).value;
+        const date = new Date(find(headers, {name: "Date"}).value);
+        return { id, body, snippet, subject, from, date };
     }
 }
